@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail | ReWear</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f6fa; }
+        .product-detail-container { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 2.5rem; }
+        .product-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; }
+        .product-header h2 { color: #2d5a27; font-size: 2rem; font-weight: 700; letter-spacing: 0.5px; }
+        .product-search { display: flex; align-items: center; gap: 0.5rem; }
+        .product-search input { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #ccc; }
+        .product-main { display: flex; gap: 3rem; margin-bottom: 0; align-items: flex-start; }
+        .product-images { flex: 1; min-width: 320px; display: flex; flex-direction: column; align-items: center; }
+        .main-image { width: 320px; height: 380px; object-fit: cover; border-radius: 16px; background: #e9ecef; margin-bottom: 1.2rem; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+        .thumbnail-row { display: flex; gap: 0.7rem; margin-top: 0.5rem; }
+        .thumbnail { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #e9ecef; cursor: pointer; border: 2px solid transparent; transition: border 0.2s; }
+        .thumbnail.selected, .thumbnail:hover { border: 2px solid #2d5a27; }
+        .product-description-box { flex: 2; background: #f8f9fa; border-radius: 16px; padding: 2rem 2.5rem; min-height: 380px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+        .product-title { font-size: 1.5rem; font-weight: 700; color: #2d5a27; margin-bottom: 1.2rem; }
+        .product-desc-text { color: #444; font-size: 1.1rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .product-meta { color: #666; font-size: 1.05rem; margin-bottom: 1.5rem; }
+        .product-actions { display: flex; justify-content: flex-end; margin: 2.5rem 0 0 0; }
+        .swap-btn { background: #2d5a27; color: #fff; padding: 1rem 2.5rem; border: none; border-radius: 10px; font-size: 1.15rem; font-weight: 700; cursor: pointer; transition: background 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .swap-btn:hover { background: #3a7c3a; }
+        .previous-listings { margin-top: 3.5rem; }
+        .previous-listings h3 { color: #2d5a27; font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: 0.2px; }
+        .listings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .listing-card { background: #fafafa; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.2s; }
+        .listing-card:hover { box-shadow: 0 4px 16px rgba(45,90,39,0.10); }
+        .listing-img { width: 100%; height: 120px; object-fit: cover; background: #e9ecef; }
+        .listing-title { font-size: 1.05rem; font-weight: 600; color: #2d5a27; padding: 0.8rem 1rem 0.5rem 1rem; }
+        @media (max-width: 900px) {
+            .product-main { flex-direction: column; align-items: stretch; }
+            .product-images, .product-description-box { min-width: 0; width: 100%; }
+            .product-description-box { padding: 1.2rem; }
+            .listings-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .listings-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-recycle"></i> ReWear</h2>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="index.html#home" class="nav-link">Home</a>
+                <a href="index.html#browse" class="nav-link">Browse</a>
+                <a href="index.html#about" class="nav-link">About</a>
+                <a href="index.html#contact" class="nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <div class="product-detail-container">
+        <div class="product-header">
+            <h2>Product Detail Page</h2>
+            <div class="product-search">
+                <input type="text" placeholder="Search...">
+                <button><i class="fa fa-search"></i></button>
+            </div>
+        </div>
+        <div class="product-main">
+            <div class="product-images">
+                <img id="mainImage" class="main-image" src="https://via.placeholder.com/320x380?text=Image" alt="Product Image">
+                <div class="thumbnail-row" id="thumbnailRow"></div>
+            </div>
+            <div class="product-description-box">
+                <div>
+                    <div class="product-title" id="productTitle">Product Title</div>
+                    <div class="product-desc-text" id="productDesc">Product description goes here...</div>
+                    <div class="product-meta" id="productMeta">Category, Size, Brand, etc.</div>
+                </div>
+            </div>
+        </div>
+        <div class="product-actions">
+            <button class="swap-btn" id="swapBtn">Available/Swap</button>
+        </div>
+        <div class="previous-listings">
+            <h3>Previous Listings:</h3>
+            <div class="listings-grid" id="previousListingsGrid"></div>
+        </div>
+    </div>
+    <script>
+    // Parse product ID from URL
+    function getProductId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+    const API_BASE_URL = 'http://localhost:8000/api';
+    async function loadProductDetail() {
+        const id = getProductId();
+        if (!id) return;
+        // Fetch product details
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/${id}/`);
+            if (!res.ok) throw new Error('Not found');
+            const item = await res.json();
+            document.getElementById('productTitle').textContent = item.title;
+            document.getElementById('productDesc').textContent = item.description || 'No description provided.';
+            // Fix category display (show name if object)
+            let category = item.category;
+            if (category && typeof category === 'object') category = category.name || '';
+            document.getElementById('productMeta').textContent = `${category || ''}${item.size ? ' | ' + item.size : ''}${item.brand ? ' | ' + item.brand : ''}`;
+            // Images
+            const mainImage = item.images && item.images.length > 0 ? item.images[0].image : 'https://via.placeholder.com/260x320?text=No+Image';
+            document.getElementById('mainImage').src = mainImage;
+            // Thumbnails
+            const thumbnailRow = document.getElementById('thumbnailRow');
+            thumbnailRow.innerHTML = '';
+            (item.images || []).forEach((img, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = img.image;
+                thumb.className = 'thumbnail' + (idx === 0 ? ' selected' : '');
+                thumb.onclick = () => {
+                    document.getElementById('mainImage').src = img.image;
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('selected'));
+                    thumb.classList.add('selected');
+                };
+                thumbnailRow.appendChild(thumb);
+            });
+        } catch (e) {
+            document.getElementById('productTitle').textContent = 'Product not found.';
+            document.getElementById('productDesc').textContent = '';
+            document.getElementById('productMeta').textContent = '';
+        }
+    }
+    async function loadPreviousListings() {
+        // Fetch featured or recent items (excluding current)
+        const id = getProductId();
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/featured/`);
+            const items = await res.json();
+            const grid = document.getElementById('previousListingsGrid');
+            grid.innerHTML = items.filter(i => String(i.id) !== id).map(item => `
+                <div class="listing-card">
+                    <img src="${item.images && item.images[0] ? item.images[0].image : 'https://via.placeholder.com/160x110?text=No+Image'}" class="listing-img" alt="${item.title}">
+                    <div class="listing-title">${item.title}</div>
+                </div>
+            `).join('');
+        } catch {}
+    }
+    loadProductDetail();
+    loadPreviousListings();
+    </script>
+</body>
+</html> 

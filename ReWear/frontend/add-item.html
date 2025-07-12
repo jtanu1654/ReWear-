@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Item | ReWear</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .add-item-container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 2rem; }
+        .add-item-title { font-size: 2rem; font-weight: 700; color: #2d5a27; margin-bottom: 1.5rem; }
+        .add-item-form { display: flex; flex-direction: column; gap: 1.2rem; }
+        .add-item-form label { font-weight: 600; color: #333; }
+        .add-item-form input, .add-item-form textarea, .add-item-form select { padding: 10px; border: 1.5px solid #e9ecef; border-radius: 8px; font-size: 1rem; }
+        .add-item-form input[type="file"] { border: none; }
+        .add-item-actions { display: flex; gap: 1rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-recycle"></i> ReWear</h2>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="index.html#home" class="nav-link">Home</a>
+                <a href="index.html#browse" class="nav-link">Browse</a>
+                <a href="index.html#about" class="nav-link">About</a>
+                <a href="index.html#contact" class="nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="add-item-container">
+            <div class="add-item-title">Add New Item</div>
+            <form id="addItemForm" class="add-item-form">
+                <label for="itemTitle">Title</label>
+                <input type="text" id="itemTitle" name="title" required>
+
+                <label for="itemDescription">Description</label>
+                <textarea id="itemDescription" name="description" rows="3" required></textarea>
+
+                <label for="itemCategory">Category</label>
+                <select id="itemCategory" name="category" required>
+                    <option value="">Select a category</option>
+                </select>
+
+                <label for="itemCondition">Condition</label>
+                <select id="itemCondition" name="condition" required>
+                    <option value="">Select condition</option>
+                    <option value="excellent">Excellent</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="poor">Poor</option>
+                </select>
+
+                <label for="itemSize">Size</label>
+                <input type="text" id="itemSize" name="size" required>
+
+                <label for="itemBrand">Brand</label>
+                <input type="text" id="itemBrand" name="brand">
+
+                <label for="itemColor">Color</label>
+                <input type="text" id="itemColor" name="color">
+
+                <label for="itemMaterial">Material</label>
+                <input type="text" id="itemMaterial" name="material">
+
+                <label for="itemPoints">Points Value</label>
+                <input type="number" id="itemPoints" name="points_value" min="1" required>
+
+                <label for="itemOriginalPrice">Original Price (optional)</label>
+                <input type="number" id="itemOriginalPrice" name="original_price" min="0" step="0.01">
+
+                <label for="itemTags">Tags (comma-separated)</label>
+                <input type="text" id="itemTags" name="tags">
+
+                <label for="itemImages">Images</label>
+                <input type="file" id="itemImages" name="images" accept="image/*" multiple required>
+
+                <div class="add-item-actions">
+                    <button type="submit" class="btn btn-primary btn-large">Add Item</button>
+                    <a href="index.html" class="btn btn-secondary btn-large">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script>
+    const API_BASE_URL = 'http://localhost:8000/api';
+    function getToken() {
+        return localStorage.getItem('authToken');
+    }
+    function showMessage(msg, type='success') {
+        alert(msg); // Simple alert for now
+    }
+    // Load categories
+    async function loadCategories() {
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/categories/`);
+            const data = await res.json();
+            const select = document.getElementById('itemCategory');
+            data.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                select.appendChild(opt);
+            });
+        } catch {}
+    }
+    loadCategories();
+    // Handle form submit
+    document.getElementById('addItemForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const token = getToken();
+        if (!token) {
+            showMessage('Please login to add an item.', 'error');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('title', document.getElementById('itemTitle').value);
+        formData.append('description', document.getElementById('itemDescription').value);
+        formData.append('category', document.getElementById('itemCategory').value);
+        formData.append('condition', document.getElementById('itemCondition').value);
+        formData.append('size', document.getElementById('itemSize').value);
+        formData.append('brand', document.getElementById('itemBrand').value);
+        formData.append('color', document.getElementById('itemColor').value);
+        formData.append('material', document.getElementById('itemMaterial').value);
+        formData.append('points_value', document.getElementById('itemPoints').value);
+        formData.append('original_price', document.getElementById('itemOriginalPrice').value);
+        formData.append('tags', document.getElementById('itemTags').value);
+        const imageInput = document.getElementById('itemImages');
+        for (let i = 0; i < imageInput.files.length; i++) {
+            formData.append('images', imageInput.files[i]);
+        }
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${token}`
+                },
+                body: formData
+            });
+            if (res.ok) {
+                showMessage('Item added successfully!', 'success');
+                window.location.href = 'index.html#browse';
+            } else {
+                showMessage('Failed to add item.', 'error');
+            }
+        } catch {
+            showMessage('Network error.', 'error');
+        }
+    };
+    </script>
+</body>
+</html> 

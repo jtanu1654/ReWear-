@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propose Swap | ReWear</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .swap-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 2rem; }
+        .swap-title { font-size: 2rem; font-weight: 700; color: #2d5a27; margin-bottom: 1.5rem; }
+        .swap-item { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
+        .swap-item-img { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .swap-user-items { margin-bottom: 2rem; }
+        .swap-user-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .swap-user-item input[type="radio"] { accent-color: #2d5a27; }
+        .swap-user-item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .swap-actions { display: flex; gap: 1rem; }
+        .no-items-message {
+            text-align: center;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .no-items-message p {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-recycle"></i> ReWear</h2>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="index.html#home" class="nav-link">Home</a>
+                <a href="index.html#browse" class="nav-link">Browse</a>
+                <a href="index.html#about" class="nav-link">About</a>
+                <a href="index.html#contact" class="nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="swap-container" id="swapContainer">
+            <!-- Content will be loaded by JS -->
+        </div>
+    </main>
+    <script>
+    const API_BASE_URL = 'http://localhost:8000/api';
+    function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    function getToken() {
+        return localStorage.getItem('authToken');
+    }
+    function showMessage(msg, type='success') {
+        alert(msg); // Simple alert for now
+    }
+    async function loadSwapPage() {
+        const itemId = getQueryParam('item');
+        if (!itemId) return;
+        const token = getToken();
+        if (!token) {
+            document.getElementById('swapContainer').innerHTML = '<div>Please <a href="index.html">login</a> to propose a swap.</div>';
+            return;
+        }
+        // Fetch the item to swap for
+        let item;
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/${itemId}/`);
+            item = await res.json();
+        } catch {
+            document.getElementById('swapContainer').innerHTML = '<div>Failed to load item.</div>';
+            return;
+        }
+        // Fetch user's own available items
+        let userItems = [];
+        try {
+            const res = await fetch(`${API_BASE_URL}/items/my/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            userItems = await res.json();
+        } catch {}
+        // Build the form
+        let html = `<div class="swap-title">Propose Swap</div>
+            <div class="swap-item">
+                <img src="${item.images && item.images[0] ? item.images[0].image : 'https://via.placeholder.com/120x120?text=No+Image'}" class="swap-item-img" alt="${item.title}">
+                <div>
+                    <div><b>${item.title}</b></div>
+                    <div>${item.points_value} points</div>
+                </div>
+            </div>
+            <form id="swapForm">
+                <div class="swap-user-items">
+                    <div><b>Select one of your items to offer:</b></div>`;
+        if (userItems.length === 0) {
+            html += `<div class="no-items-message">
+                <p>You have no available items to offer for a swap.</p>
+                <div class="swap-actions">
+                    <a href="index.html" class="btn btn-secondary btn-large">Go to Home</a>
+                    <a href="add-item.html" class="btn btn-primary btn-large">Add an Item</a>
+                </div>
+            </div>`;
+        } else {
+            userItems.forEach(userItem => {
+                html += `<label class="swap-user-item">
+                    <input type="radio" name="userItem" value="${userItem.id}">
+                    <img src="${userItem.images && userItem.images[0] ? userItem.images[0].image : 'https://via.placeholder.com/60x60?text=No+Image'}" class="swap-user-item-img">
+                    <span>${userItem.title}</span>
+                </label>`;
+            });
+        }
+        html += `</div>`;
+        if (userItems.length === 0) {
+            html += `<div class="swap-actions">
+                <button type="submit" class="btn btn-primary btn-large" disabled>Send Swap Proposal</button>
+            </div>`;
+        } else {
+            html += `<div class="swap-actions">
+                <button type="submit" class="btn btn-primary btn-large">Send Swap Proposal</button>
+            </div>`;
+        }
+        html += `</form>`;
+        document.getElementById('swapContainer').innerHTML = html;
+        document.getElementById('swapForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const offeredItemId = document.querySelector('input[name="userItem"]:checked');
+            if (!offeredItemId) {
+                showMessage('Please select one of your items to offer.', 'error');
+                return;
+            }
+            // Send swap proposal to backend
+            try {
+                const res = await fetch(`${API_BASE_URL}/swaps/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${token}`
+                    },
+                    body: JSON.stringify({
+                        requested_item: itemId,
+                        offered_item: offeredItemId.value
+                    })
+                });
+                if (res.ok) {
+                    showMessage('Swap proposal sent!', 'success');
+                } else {
+                    showMessage('Failed to send swap proposal.', 'error');
+                }
+            } catch {
+                showMessage('Network error.', 'error');
+            }
+        };
+    }
+    loadSwapPage();
+    </script>
+</body>
+</html> 
